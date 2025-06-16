@@ -88,31 +88,151 @@ vpc##################################
    10  ssh -i "di.pem" ec2-user@10.0.1.120
     ping google.com 
 
-VPC from vir to ohio#################
-Vir
-    1 yum install httpd -y
-    2  ping 20.0.0.149
-    ping 3.15.203.189
-v
+########VPC WITH PEER CONNECTION
+ 
+REGION 1:
+Create a VPC 10.0.0.0/16
+Create IGW and attach with VPC
+ADD Subnet public :10.0.0.0/24
+            private : 10.0.1.0/25
+ADD Route Tables Public > connect with public subnet > edit routs and enable IGW
+                  private > connect with private subnet
+ 
+REGION 2:
+Create a VPC 20.0.0.0/16
+Create IGW and attach with VPC
+ADD Subnet public :20.0.0.0/24
+            private : 20.0.1.0/24
+ADD Route Tables Public > connect with public subnet > edit routs and enable IGW
+                  private > connect with private subnet
+ 
 
-   18  cat > final.txt
-   19  cat final.txt
-   20  scp final.txt root@3.15.203.189:/tmp
-   21  scp final.txt root@3.20.0.0.149:/tmp
-   22  scp final.txt root@3.20.0.0.149:/mnt
-   23  scp final.txt root@20.0.0.149:/mnt
-
-ohioo
-
+CREATE PUBLIC AND PRIVATE INSTANCES...................................................
+Public --> my-vpc
+            public-subnet
+            public ip enable
+            SG - SSH, HTTP, ALL ICMP IPv4
+Private --> my-vpc
+            private-subnet
+            public ip disable
+            SG - SSH, HTTP, ALL ICMP IPv4
+ 
+ 
+INSTANCE 1 & 2 (public) :
+ 
+sudo su -
+passwd root
 yum install httpd -y
-    2  ping 10.0.0.28
-    3  passwd root
-    4*
-    5  vim /etc/ssh/sshd_config
-    7  systemctl restart sshd
-    8  systemctl enable sshd
-    9  cd /tmp
-   10  ll
-   11  history
+systemctl restart httpd
+systemctl enable httpd
+vim /etc/ssh/sshd_config
+(enable permit root login, and first yes)
+systemctl restart sshd
+systemctl enable sshd
 
+ 
+[IF REQUIRED JUST DO:
+cd /var/www/html
+echo "This is my server" > index.html
+systemctl restart httpd
+(enable 8080 port and paste the public ip in web to see index.html  http://publicip:8080)]
+ 
 
+cat > hari.txt
+Hi
+(ctrl + d)-- to save
+scp hari.txt root@(opposite region public ip):/tmp
+ 
+TO CHECK WHETHER FILE IS TRANSFERED
+ 
+cd /tmp  (in other region)
+ll
+ 
+(file will be present)
+ 
+  
+ 
+PEER CONNECTION (DEDICATED ROUTE)---------------------------------------------------------------------------
+ 
+VPC (N.Virginia) > peer connections > peer name > zone: us-east-2 > select vpc > VPC_ID of Ohio > create peer connection.
+ 
+once added ACCEPT it in the Ohio vpc peering
+ 
+Then in both region route table > edit routes > select peer connection and CIDR vice versa 
+   N.Virginia : 20.0.0.0/16
+   Ohio : 10.0.0.0/16
+ 
+ 
+After that check ping connection :
+   N.V   : ping (private ip of public instance ohio )
+   Ohio  : ping (private ip of public instance N.V )
+ 
+ 
+cat > hari.txt
+Hi
+(ctrl + d)-- to save
+scp hari.txt root@(opposite region private ip):/tmp
+ 
+Use this and check whether data is transferred.
+ 
+cd /tmp  (in other region)
+ll
+
+########################
+
+Step-2:- Install the dependencies.
+-> In CentOS or Red Haty
+
+ 
+sudo Yum update
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+aws --version
+aws configure
+copp access key :secret key
+ 
+sudo yum install automake fuse fuse-devel gcc-c++ git libcurl-devel libxml2-devel make openssl-devel
+
+ 
+In Ubuntu or Debian
+ 
+ 
+sudo apt-get install automake autotools-dev fuse g++ git libcurl4-gnutls-dev libfuse-dev libssl-dev libxml2-dev make pkg-config
+Step-3:- Clone s3fs source code from git.
+ 
+ 
+git clone https://github.com/s3fs-fuse/s3fs-fuse.git
+
+ 
+Step-4:- Now change to source code  directory, and compile and install the code with the following commands:
+ 
+ 
+cd s3fs-fuse/
+ 
+ll
+./autogen.sh
+./configure --prefix=/usr --with-openssl
+make
+sudo make install
+verify pkg
+which s3fs
+ 
+ 
+Step-7 :- Create a new file in /etc with the name passwd-s3fs and Paste the access key and secret key in the below format .
+ 
+ 
+touch /etc/passwd-s3fs
+vim /etc/passwd-s3fs
+ 
+Your_accesskey:Your_secretkey
+
+ 
+Step-8:- change the permission of file
+ 
+ 
+sudo chmod 640 /etc/passwd-s3fs
+ 
+ 
+########################
+for mounting s3 bucket
+ 
+s3fs sanjaynn /mnt -o passwd_file=/etc/passwd-s3fs

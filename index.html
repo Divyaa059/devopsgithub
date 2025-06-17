@@ -234,3 +234,27 @@ sudo chmod 640 /etc/passwd-s3fs
 for mounting s3 bucket
  
 s3fs sanjaynn /mnt -o passwd_file=/etc/passwd-s3fs
+#######################vpc peerrr
+virginia
+yum install httpd -y
+    3  ping 20.0.0.161
+    5  passwd root
+    7  vim /etc/ssh/sshd_config
+    8  systemctl restart sshd
+    9  systemctl enable sshd
+   10  cat > sanj.txt
+   13  scp sanj.txt root@3.17.186.17:/tmp
+   14  scp sanj.txt root@20.0.0.161:/mnt
+
+ohio
+    yum install httpd -y
+    2  passwd root
+    3  vim /etc/ssh/sshd_config
+    4  systemctl restart sshd
+    5  systemctl enable sshd
+    6  scp sanj.txt root@13.221.202.24:/tmp
+    7  ll
+    8  cd /tmp
+    9  ll
+   10  cd /mnt
+   11  ll
